@@ -4,7 +4,6 @@
 
 - Dustin De Luna
 - Jared Miller
-- Aman Mohamed
 - Nnaemeka Onochie
 
 ## Description

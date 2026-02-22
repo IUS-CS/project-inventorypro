@@ -6,7 +6,6 @@ An inventory management system that tracks items by category, quantity, transact
 
 - Dustin De Luna
 - Jared Miller
-- Aman Mohamed
 - Nnaemeka Onochie
 
 ## Tech Stack
