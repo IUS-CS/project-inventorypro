@@ -1,5 +1,15 @@
-package com.inventory;
+package com.inventorypro;
 
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Basic test to verify the project builds and tests run.
+ */
 public class MainTest {
-    // Placeholder test file
+
+    @Test
+    void simpleTest() {
+        assertEquals(2, 1 + 1);
+    }
 }
