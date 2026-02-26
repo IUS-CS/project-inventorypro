@@ -1,6 +1,5 @@
 package com.inventory;
 
-
  //Entry point of the Inventory System prototype
 
 public class Main {

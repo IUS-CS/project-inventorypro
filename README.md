@@ -10,10 +10,27 @@ An inventory management system that tracks items by category, quantity, transact
 
 ## Tech Stack
 
-- **Database:** PostgreSQL
-- **Backend:** Java + Spring Boot
-- **Frontend:** React + TypeScript
-- **Barcode Scanning:** ZXing
+- **Language:** Java
+- **UI:** JavaFX
+- **Database:** SQLite
+- **Build Tool:** Maven
+
+## Prerequisities:
+Make sure you have installed:
+- Java
+- Maven
+
+## How to Run
+```bash
+git clone https://github.com/IUS-CS/project-inventorypro
+cd project-inventorypro
+mvn javafx:run
+```
+
+## How to Test
+```bash
+mvn test
+```
 
 ## Docs
 

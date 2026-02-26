@@ -12,7 +12,8 @@ InventoryPro is an inventory management system that tracks items by category, qu
 
 ## Tech Stack
 
-- **Database:** PostgreSQL
-- **Backend:** Java + Spring Boot
-- **Frontend:** React + TypeScript
-- **Barcode Scanning:** ZXing
+- **Language:** Java
+- **UI:** JavaFX
+- **Database:** SQLite
+- **Build Tool:** Maven
+
