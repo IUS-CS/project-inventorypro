@@ -6,15 +6,36 @@
 - Jared Miller
 - Nnaemeka Onochie
 
-## Repository Structure
+## Repo Structure
 
 ```
 project-inventorypro/
 ├── doc/
+│   ├── designpatterns.md               # Design pattern decisions and plans
+│   ├── organization.md                 # Team structure and repo layout
+│   ├── proposal.md                     # Original project proposal
+│   ├── sprint1.md                      # Sprint 1 ceremony minutes
+│   └── TODO.md                         # Sprint task tracking
+├── images/                             # Screenshots
 ├── src/
-│   ├── main/java/com/inventory/        # Item model, InventoryService
-│   ├── main/java/com/inventorypro/ui/  # JavaFX screens and validation
-│   └── test/java/com/inventory/        # Unit tests
+│   ├── main/java/com/inventory/
+│   │   ├── Main.java                   # Application bootstrap
+│   │   ├── model/
+│   │   │   ├── Item.java               # Core data model
+│   │   │   └── ItemFactory.java        # Factory for creating Items
+│   │   └── service/
+│   │       ├── Database.java           # Singleton SQLite repository
+│   │       └── InventoryService.java   # Business logic + persistence layer
+│   └── main/java/com/inventorypro/
+│       ├── model/                      # (reserved for future models)
+│       └── ui/
+│           ├── App.java                # JavaFX entry point
+│           ├── Scenes.java             # Dashboard, Add, and Edit screens
+│           └── validation/
+│               └── ItemValidator.java  # Input validation rules
+├── test/java/com/inventory/
+│   ├── InventoryServiceTest.java       # Unit tests for InventoryService
+│   └── MainTest.java                   # Smoke test for Main
 ├── AUTHORS
 ├── LICENSE
 ├── pom.xml
@@ -31,6 +52,3 @@ Responsible for writing and running unit tests.
 
 **Nnaemeka Onochie — Full-Stack Developer & Project Lead**
 Responsible for overall project coordination, connecting the frontend and backend, managing the repository, conducting code reviews, and handling deployment.
-
-
-

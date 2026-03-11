@@ -10,6 +10,17 @@ import java.util.Map;
 public class InventoryService {
 
     private final Map<String, Item> store = new LinkedHashMap<>();
+    private final Database db;
+
+    public InventoryService() {
+        this.db = null;
+    }
+
+    public InventoryService(Database db) {
+        this.db = db;
+        db.init();
+        db.loadAll().forEach(item -> store.put(item.getId(), item));
+    }
 
     public void addItem(Item item) {
         if (item == null) {
@@ -19,6 +30,8 @@ public class InventoryService {
             throw new IllegalArgumentException("An item with id '" + item.getId() + "' already exists.");
         }
         store.put(item.getId(), item);
+        if (db != null)
+            db.insert(item);
     }
 
     public Item findItemById(String id) {
@@ -33,7 +46,19 @@ public class InventoryService {
         if (quantity < 0) {
             throw new IllegalArgumentException("Quantity must not be negative.");
         }
-        findItemById(id).setQuantity(quantity);
+        Item item = findItemById(id);
+        item.setQuantity(quantity);
+        if (db != null)
+            db.update(item);
+    }
+
+    public void updateItem(Item item) {
+        if (!store.containsKey(item.getId())) {
+            throw new IllegalArgumentException("No item found with id '" + item.getId() + "'.");
+        }
+        store.put(item.getId(), item);
+        if (db != null)
+            db.update(item);
     }
 
     public void removeItem(String id) {
@@ -41,6 +66,8 @@ public class InventoryService {
             throw new IllegalArgumentException("No item found with id '" + id + "'.");
         }
         store.remove(id);
+        if (db != null)
+            db.delete(id);
     }
 
     public List<Item> listItems() {
