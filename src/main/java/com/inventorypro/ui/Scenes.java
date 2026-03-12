@@ -29,6 +29,7 @@ public class Scenes {
         search.setPromptText("Search by name, category, or location...");
 
         FilteredList<Item> filtered = new FilteredList<>(items, p -> true);
+
         search.textProperty().addListener((obs, oldVal, newVal) -> {
             String lower = (newVal == null) ? "" : newVal.trim().toLowerCase();
 
@@ -36,15 +37,17 @@ public class Scenes {
                 filtered.setPredicate(item -> true);
             } else {
                 filtered.setPredicate(item ->
-                item.getName() != null && item.getName().toLowerCase().contains(lower)
-                        || item.getCategory() != null && item.getCategory().toLowerCase().contains(lower)
-                        || item.getLocation() != null && item.getLocation().toLowerCase().contains(lower)
+                    (item.getName() != null && item.getName().toLowerCase().contains(lower)) ||
+                    (item.getCategory() != null && item.getCategory().toLowerCase().contains(lower)) ||
+                    (item.getLocation() != null && item.getLocation().toLowerCase().contains(lower))
                 );
             }
 });
 
         SortedList<Item> sorted = new SortedList<>(filtered);
-
+        sorted.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(sorted);
+        
         Label placeholder = new Label("No items yet. Click \"Add Item\" to get started.");
         search.textProperty()
                 .addListener((obs, oldVal, newVal) -> placeholder.setText((newVal == null || newVal.trim().isEmpty())
@@ -160,7 +163,9 @@ remove.setOnAction(e -> {
 
 clearSearch.setOnAction(e -> search.clear());
 
-// Double-click row to edit item
+Button clearSearch = new Button("Clear Search");
+clearSearch.setOnAction(e -> search.clear());
+
 table.setRowFactory(tv -> {
     TableRow<Item> row = new TableRow<>();
     row.setOnMouseClicked(event -> {
