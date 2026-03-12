@@ -31,14 +31,17 @@ public class Scenes {
         FilteredList<Item> filtered = new FilteredList<>(items, p -> true);
         search.textProperty().addListener((obs, oldVal, newVal) -> {
             String lower = (newVal == null) ? "" : newVal.trim().toLowerCase();
+
             if (lower.isEmpty()) {
-                filtered.setPredicate(null);
+                filtered.setPredicate(item -> true);
             } else {
-                filtered.setPredicate(item -> item.getName().toLowerCase().contains(lower)
-                        || item.getCategory().toLowerCase().contains(lower)
-                        || item.getLocation().toLowerCase().contains(lower));
+                filtered.setPredicate(item ->
+                item.getName() != null && item.getName().toLowerCase().contains(lower)
+                        || item.getCategory() != null && item.getCategory().toLowerCase().contains(lower)
+                        || item.getLocation() != null && item.getLocation().toLowerCase().contains(lower)
+                );
             }
-        });
+});
 
         SortedList<Item> sorted = new SortedList<>(filtered);
 
@@ -124,28 +127,52 @@ public class Scenes {
         goAdd.setOnAction(e -> stage.getScene().setRoot(createAddItem(stage)));
 
         Button edit = new Button("Edit Selected");
-        edit.setOnAction(e -> {
-            Item selected = table.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                stage.getScene().setRoot(createEditItem(stage, selected));
-            } else {
-                new Alert(Alert.AlertType.WARNING, "Please select an item to edit.").showAndWait();
-            }
-        });
-
         Button remove = new Button("Remove Selected");
-        remove.setOnAction(e -> {
-            Item selected = table.getSelectionModel().getSelectedItem();
-            if (selected != null) {
+        Button clearSearch = new Button("Clear Search");
+
+        edit.disableProperty().bind(table.getSelectionModel().selectedItemProperty().isNull());
+        remove.disableProperty().bind(table.getSelectionModel().selectedItemProperty().isNull());
+
+        edit.setOnAction(e -> {
+        Item selected = table.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+        stage.getScene().setRoot(createEditItem(stage, selected));
+        }
+});
+
+remove.setOnAction(e -> {
+    Item selected = table.getSelectionModel().getSelectedItem();
+    if (selected != null) {
+        Alert confirm = new Alert(
+                Alert.AlertType.CONFIRMATION,
+                "Are you sure you want to remove \"" + selected.getName() + "\"?"
+        );
+        confirm.setHeaderText("Confirm Delete");
+
+        confirm.showAndWait().ifPresent(result -> {
+            if (result == ButtonType.OK) {
                 service.removeItem(selected.getId());
                 items.remove(selected);
-            } else {
-                new Alert(Alert.AlertType.WARNING, "Please select an item to remove.").showAndWait();
             }
         });
+    }
+});
 
-        HBox actions = new HBox(10, goAdd, edit, remove);
-        actions.setPadding(new Insets(10, 0, 0, 0));
+clearSearch.setOnAction(e -> search.clear());
+
+// Double-click row to edit item
+table.setRowFactory(tv -> {
+    TableRow<Item> row = new TableRow<>();
+    row.setOnMouseClicked(event -> {
+        if (event.getClickCount() == 2 && !row.isEmpty()) {
+            stage.getScene().setRoot(createEditItem(stage, row.getItem()));
+        }
+    });
+    return row;
+});
+
+HBox actions = new HBox(10, goAdd, edit, remove, clearSearch);
+actions.setPadding(new Insets(10, 0, 0, 0));
 
         VBox root = new VBox(12, title, search, table, actions);
         root.setPadding(new Insets(18));
@@ -198,10 +225,21 @@ public class Scenes {
                 status.setText(error);
                 return;
             }
-            Item newItem = ItemFactory.createItem(name.getText().trim(), category.getValue(),
-                    qValue, location.getValue());
-            service.addItem(newItem);
-            items.add(newItem);
+            Item newItem = ItemFactory.createItem(
+                name.getText().trim(),
+                category.getValue(),
+                qValue,
+                location.getValue()
+            );
+
+             service.addItem(newItem);
+             items.add(newItem);
+
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setHeaderText("Item Added");
+            success.setContentText("The item was added successfully.");
+            success.showAndWait();
+
             stage.getScene().setRoot(createDashboard(stage));
         });
 
@@ -264,29 +302,50 @@ public class Scenes {
         save.setOnAction(e -> {
             String qText = quantity.getText().trim();
             int qValue;
+
             try {
                 qValue = Integer.parseInt(qText);
             } catch (NumberFormatException ex) {
+                status.setStyle("-fx-text-fill: red;");
                 status.setText("Quantity must be a whole number.");
                 return;
             }
 
             String error = ItemValidator.validate(
-                    name.getText(), category.getValue(), location.getValue(), qValue);
+                name.getText(),
+                category.getValue(),
+                location.getValue(),
+                qValue
+            );
+
             if (error != null) {
+                status.setStyle("-fx-text-fill: red;");
                 status.setText(error);
                 return;
             }
 
-            Item updated = new Item(item.getId(), name.getText().trim(),
-                    category.getValue(), qValue, location.getValue());
+            Item updated = new Item(
+                item.getId(),
+                name.getText().trim(),
+                category.getValue(),
+                qValue,
+                location.getValue()
+            );
+
             service.updateItem(updated);
+
             int idx = items.indexOf(item);
             if (idx >= 0) {
                 items.set(idx, updated);
             }
+
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setHeaderText("Item Updated");
+            success.setContentText("The item was updated successfully.");
+            success.showAndWait();
+
             stage.getScene().setRoot(createDashboard(stage));
-        });
+});
 
         Button back = new Button("Cancel");
         back.setOnAction(e -> stage.getScene().setRoot(createDashboard(stage)));
