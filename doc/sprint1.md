@@ -12,7 +12,7 @@ Members present:
 
 This sprint, we completed:
 
-- Createed **Item** model with id, name, category, quantity, and location
+- Created **Item** model with id, name, category, quantity, and location
 - Implemented **InventoryService** with in-memory CRUD operations
 - Wrote unit tests for **InventoryService**
 - Built the inventory **dashboard screen**
