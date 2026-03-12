@@ -29,19 +29,25 @@ public class Scenes {
         search.setPromptText("Search by name, category, or location...");
 
         FilteredList<Item> filtered = new FilteredList<>(items, p -> true);
+
         search.textProperty().addListener((obs, oldVal, newVal) -> {
             String lower = (newVal == null) ? "" : newVal.trim().toLowerCase();
+
             if (lower.isEmpty()) {
-                filtered.setPredicate(null);
+                filtered.setPredicate(item -> true);
             } else {
-                filtered.setPredicate(item -> item.getName().toLowerCase().contains(lower)
-                        || item.getCategory().toLowerCase().contains(lower)
-                        || item.getLocation().toLowerCase().contains(lower));
+                filtered.setPredicate(item ->
+                    (item.getName() != null && item.getName().toLowerCase().contains(lower)) ||
+                    (item.getCategory() != null && item.getCategory().toLowerCase().contains(lower)) ||
+                    (item.getLocation() != null && item.getLocation().toLowerCase().contains(lower))
+                );
             }
-        });
+});
 
         SortedList<Item> sorted = new SortedList<>(filtered);
-
+        sorted.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(sorted);
+        
         Label placeholder = new Label("No items yet. Click \"Add Item\" to get started.");
         search.textProperty()
                 .addListener((obs, oldVal, newVal) -> placeholder.setText((newVal == null || newVal.trim().isEmpty())
@@ -144,7 +150,10 @@ public class Scenes {
             }
         });
 
-        HBox actions = new HBox(10, goAdd, edit, remove);
+        Button clearSearch = new Button("Clear Search");
+        clearSearch.setOnAction(e -> search.clear());
+
+        HBox actions = new HBox(10, goAdd, edit, remove, clearSearch);
         actions.setPadding(new Insets(10, 0, 0, 0));
 
         VBox root = new VBox(12, title, search, table, actions);
