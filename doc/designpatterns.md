@@ -7,7 +7,7 @@ InventoryPro is a JavaFX desktop app backed by SQLite for tracking inventory ite
 ## Patterns We're done
 
 **Database**
-We only ever want one connection to the SQLite file. the older method wasteful and wasn't savind items. 
+We only ever want one connection to the SQLite file. the older method wasteful and wasn't saving items. 
 
 **Inventory**
 InventoryService and Database were completely disconnected so this fix adds a Database parameter to InventoryService's constructor so it loads persisted items on startup and delegates every write to the database automatically. 
