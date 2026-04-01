@@ -77,4 +77,11 @@ public class InventoryService {
     public int size() {
         return store.size();
     }
+
+    public void reload() {
+        store.clear();
+        if (db != null) {
+            db.loadAll().forEach(item -> store.put(item.getId(), item));
+        }
+    }
 }
