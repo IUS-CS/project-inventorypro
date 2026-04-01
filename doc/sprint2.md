@@ -32,7 +32,6 @@ Here are screenshots of what we did:
 
 ## Retro
 
----
 
 ### What Went Well
 - Good progress connecting frontend and backend
@@ -42,6 +41,7 @@ Here are screenshots of what we did:
 ### What Could Be Improved
 
 ### Actionable Commitments
+- As a team, we will make it more intreractive and furnish the UI
 
 ---
 
