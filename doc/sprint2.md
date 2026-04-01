@@ -39,7 +39,7 @@ Here are screenshots of what we did:
 - Database integration worked successfully with SQLite
 
 ### What Could Be Improved
--It needs more functionality
+- It needs more functionality
 
 ### Actionable Commitments
 - As a team, we will make it more intreractive and furnish the UI
