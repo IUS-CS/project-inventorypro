@@ -89,17 +89,19 @@ public class Scenes {
             showAllBtn[0].setVisible(false);
 
             if (lower.isEmpty()) {
-                filtered.setPredicate(null);
+                filtered.setPredicate(item -> true);
             } else {
                 filtered.setPredicate(
                         item -> (item.getName() != null && item.getName().toLowerCase().contains(lower)) ||
                                 (item.getCategory() != null && item.getCategory().toLowerCase().contains(lower)) ||
                                 (item.getLocation() != null && item.getLocation().toLowerCase().contains(lower)));
             }
-        });
+});
 
         SortedList<Item> sorted = new SortedList<>(filtered);
-
+        sorted.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(sorted);
+        
         Label placeholder = new Label("No items yet. Click \"Add Item\" to get started.");
         search.textProperty()
                 .addListener((obs, oldVal, newVal) -> placeholder.setText((newVal == null || newVal.trim().isEmpty())
@@ -248,6 +250,8 @@ public class Scenes {
                 }
             }
         });
+    }
+});
 
         Button goDelivery = new Button("Receive Delivery");
         goDelivery.setOnAction(e -> stage.getScene().setRoot(createDelivery(stage)));
@@ -407,9 +411,11 @@ public class Scenes {
         save.setOnAction(e -> {
             String qText = quantity.getText().trim();
             int qValue;
+
             try {
                 qValue = Integer.parseInt(qText);
             } catch (NumberFormatException ex) {
+                status.setStyle("-fx-text-fill: red;");
                 status.setText("Quantity must be a whole number.");
                 return;
             }
@@ -421,6 +427,7 @@ public class Scenes {
                     qValue);
 
             if (error != null) {
+                status.setStyle("-fx-text-fill: red;");
                 status.setText(error);
                 return;
             }
@@ -433,12 +440,19 @@ public class Scenes {
                     location.getValue());
 
             service.updateItem(updated);
+
             int idx = items.indexOf(item);
             if (idx >= 0) {
                 items.set(idx, updated);
             }
+
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setHeaderText("Item Updated");
+            success.setContentText("The item was updated successfully.");
+            success.showAndWait();
+
             stage.getScene().setRoot(createDashboard(stage));
-        });
+});
 
         Button back = new Button("Cancel");
         back.setOnAction(e -> stage.getScene().setRoot(createDashboard(stage)));

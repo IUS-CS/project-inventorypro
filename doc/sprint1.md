@@ -12,9 +12,14 @@ Members present:
 
 This sprint, we completed:
 
-* X
-* Y
-* Z
+- Created **Item** model with id, name, category, quantity, and location
+- Implemented **InventoryService** with in-memory CRUD operations
+- Wrote unit tests for **InventoryService**
+- Built the inventory **dashboard screen**
+- Created **input validation** for item data
+- Wrote **README, AUTHORS, LICENSE, and team organization documentation**
+- Added `update()` method to **Database.java** for persisting item changes
+- Updated **Scenes.java** to use **ItemFactory** instead of inline item creation
 
 Here are screenshots of what we did:
 
