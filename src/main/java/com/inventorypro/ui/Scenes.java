@@ -26,6 +26,7 @@ public class Scenes {
     private static final InventoryService service = new InventoryService(Database.getInstance());
     private static final ObservableList<Item> items = FXCollections.observableArrayList(service.listItems());
 
+    @SuppressWarnings("unchecked")
     public static Parent createDashboard(Stage stage) {
         Label title = new Label("Inventory Dashboard");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
@@ -96,12 +97,10 @@ public class Scenes {
                                 (item.getCategory() != null && item.getCategory().toLowerCase().contains(lower)) ||
                                 (item.getLocation() != null && item.getLocation().toLowerCase().contains(lower)));
             }
-});
+        });
 
         SortedList<Item> sorted = new SortedList<>(filtered);
-        sorted.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(sorted);
-        
+
         Label placeholder = new Label("No items yet. Click \"Add Item\" to get started.");
         search.textProperty()
                 .addListener((obs, oldVal, newVal) -> placeholder.setText((newVal == null || newVal.trim().isEmpty())
@@ -250,8 +249,6 @@ public class Scenes {
                 }
             }
         });
-    }
-});
 
         Button goDelivery = new Button("Receive Delivery");
         goDelivery.setOnAction(e -> stage.getScene().setRoot(createDelivery(stage)));
@@ -452,7 +449,7 @@ public class Scenes {
             success.showAndWait();
 
             stage.getScene().setRoot(createDashboard(stage));
-});
+        });
 
         Button back = new Button("Cancel");
         back.setOnAction(e -> stage.getScene().setRoot(createDashboard(stage)));
@@ -482,6 +479,7 @@ public class Scenes {
         return root;
     }
 
+    @SuppressWarnings("unchecked")
     public static Parent createDelivery(Stage stage) {
         Label title = new Label("Receive Truck Delivery");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
