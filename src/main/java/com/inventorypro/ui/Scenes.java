@@ -6,6 +6,7 @@ import com.inventory.service.Database;
 import com.inventory.service.InventoryService;
 import com.inventorypro.ui.validation.ItemValidator;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -14,7 +15,11 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import java.io.File;
+import java.io.PrintWriter;
 
 public class Scenes {
 
@@ -25,18 +30,71 @@ public class Scenes {
         Label title = new Label("Inventory Dashboard");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
+        Label totalItemsLabel = new Label();
+        Label lowStockLabel = new Label();
+        Label totalQtyLabel = new Label();
+        String statStyle = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 16; "
+                + "-fx-background-color: #d9edf7; -fx-background-radius: 8; -fx-text-fill: #31708f;";
+        String lowStockStyle = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 16; "
+                + "-fx-background-color: #fcf8e3; -fx-background-radius: 8; -fx-text-fill: #8a6d3b;";
+        totalItemsLabel.setStyle(statStyle);
+        totalQtyLabel.setStyle(statStyle);
+        lowStockLabel.setStyle(lowStockStyle + "-fx-cursor: hand;");
+
+        Runnable updateSummary = () -> {
+            int total = items.size();
+            long lowStock = items.stream().filter(i -> i.getQuantity() < 5).count();
+            int totalQty = items.stream().mapToInt(Item::getQuantity).sum();
+            totalItemsLabel.setText("Total Items: " + total);
+            lowStockLabel.setText("Low Stock: " + lowStock);
+            totalQtyLabel.setText("Total Quantity: " + totalQty);
+        };
+        updateSummary.run();
+        items.addListener((ListChangeListener<Item>) c -> updateSummary.run());
+
+        HBox summaryBar = new HBox(12, totalItemsLabel, lowStockLabel, totalQtyLabel);
+        summaryBar.setPadding(new Insets(4, 0, 8, 0));
+        summaryBar.setStyle("-fx-border-color: #ddd; -fx-border-width: 0 0 1 0; -fx-padding: 6 0 10 0;");
+
         TextField search = new TextField();
         search.setPromptText("Search by name, category, or location...");
 
         FilteredList<Item> filtered = new FilteredList<>(items, p -> true);
+
+        final boolean[] lowStockActive = { false };
+        final Button[] showAllBtn = { null };
+        String lowStockNormal = lowStockStyle + "-fx-cursor: hand;";
+        String lowStockHighlight = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 16; "
+                + "-fx-background-color: #f2dede; -fx-background-radius: 8; -fx-text-fill: #a94442; -fx-cursor: hand;";
+
+        lowStockLabel.setOnMouseClicked(ev -> {
+            lowStockActive[0] = !lowStockActive[0];
+            if (lowStockActive[0]) {
+                lowStockLabel.setStyle(lowStockHighlight);
+                search.clear();
+                filtered.setPredicate(item -> item.getQuantity() < 5);
+                showAllBtn[0].setVisible(true);
+            } else {
+                lowStockLabel.setStyle(lowStockNormal);
+                filtered.setPredicate(item -> true);
+                showAllBtn[0].setVisible(false);
+            }
+        });
+
         search.textProperty().addListener((obs, oldVal, newVal) -> {
             String lower = (newVal == null) ? "" : newVal.trim().toLowerCase();
+
+            lowStockActive[0] = false;
+            lowStockLabel.setStyle(lowStockNormal);
+            showAllBtn[0].setVisible(false);
+
             if (lower.isEmpty()) {
                 filtered.setPredicate(null);
             } else {
-                filtered.setPredicate(item -> item.getName().toLowerCase().contains(lower)
-                        || item.getCategory().toLowerCase().contains(lower)
-                        || item.getLocation().toLowerCase().contains(lower));
+                filtered.setPredicate(
+                        item -> (item.getName() != null && item.getName().toLowerCase().contains(lower)) ||
+                                (item.getCategory() != null && item.getCategory().toLowerCase().contains(lower)) ||
+                                (item.getLocation() != null && item.getLocation().toLowerCase().contains(lower)));
             }
         });
 
@@ -53,20 +111,28 @@ public class Scenes {
         sorted.comparatorProperty().bind(table.comparatorProperty());
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
-        table.setRowFactory(tv -> new TableRow<>() {
-            @Override
-            protected void updateItem(Item item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setStyle("");
-                } else if (item.getQuantity() < 5) {
-                    setStyle("-fx-background-color: lightcoral;");
-                } else if (item.getQuantity() < 10) {
-                    setStyle("-fx-background-color: lightyellow;");
-                } else {
-                    setStyle("-fx-background-color: lightgreen;");
+        table.setRowFactory(tv -> {
+            TableRow<Item> row = new TableRow<>() {
+                @Override
+                protected void updateItem(Item item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setStyle("");
+                    } else if (item.getQuantity() < 5) {
+                        setStyle("-fx-background-color: lightcoral;");
+                    } else if (item.getQuantity() < 10) {
+                        setStyle("-fx-background-color: lightyellow;");
+                    } else {
+                        setStyle("-fx-background-color: lightgreen;");
+                    }
                 }
-            }
+            };
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    stage.getScene().setRoot(createEditItem(stage, row.getItem()));
+                }
+            });
+            return row;
         });
 
         TableColumn<Item, String> colName = new TableColumn<>("Name");
@@ -128,8 +194,6 @@ public class Scenes {
             Item selected = table.getSelectionModel().getSelectedItem();
             if (selected != null) {
                 stage.getScene().setRoot(createEditItem(stage, selected));
-            } else {
-                new Alert(Alert.AlertType.WARNING, "Please select an item to edit.").showAndWait();
             }
         });
 
@@ -137,17 +201,86 @@ public class Scenes {
         remove.setOnAction(e -> {
             Item selected = table.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                service.removeItem(selected.getId());
-                items.remove(selected);
-            } else {
-                new Alert(Alert.AlertType.WARNING, "Please select an item to remove.").showAndWait();
+                Alert confirm = new Alert(
+                        Alert.AlertType.CONFIRMATION,
+                        "Are you sure you want to remove \"" + selected.getName() + "\"?");
+                confirm.setHeaderText("Confirm Delete");
+
+                confirm.showAndWait().ifPresent(result -> {
+                    if (result == ButtonType.OK) {
+                        service.removeItem(selected.getId());
+                        items.remove(selected);
+                    }
+                });
             }
         });
 
-        HBox actions = new HBox(10, goAdd, edit, remove);
+        Button clearSearch = new Button("Clear Search");
+        clearSearch.setOnAction(e -> search.clear());
+
+        Button exportCsv = new Button("Export CSV");
+        exportCsv.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Export Inventory");
+            chooser.setInitialFileName("inventory.csv");
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+            File file = chooser.showSaveDialog(stage);
+            if (file != null) {
+                try (PrintWriter pw = new PrintWriter(file)) {
+                    pw.println("ID,Name,Category,Quantity,Location");
+                    for (Item item : items) {
+                        pw.println(item.getId() + ","
+                                + item.getName() + ","
+                                + item.getCategory() + ","
+                                + item.getQuantity() + ","
+                                + item.getLocation());
+                    }
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION);
+                    ok.setHeaderText("Export Complete");
+                    ok.setContentText("Exported " + items.size() + " items to " + file.getName());
+                    ok.showAndWait();
+                } catch (Exception ex) {
+                    Alert err = new Alert(Alert.AlertType.ERROR);
+                    err.setHeaderText("Export Failed");
+                    err.setContentText(ex.getMessage());
+                    err.showAndWait();
+                }
+            }
+        });
+
+        Button goDelivery = new Button("Receive Delivery");
+        goDelivery.setOnAction(e -> stage.getScene().setRoot(createDelivery(stage)));
+
+        Button resetBtn = new Button("Reset Inventory");
+        resetBtn.setOnAction(e -> {
+            Alert confirm = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "This will reset all items back to the original stock levels. Continue?");
+            confirm.setHeaderText("Reset Inventory");
+            confirm.showAndWait().ifPresent(result -> {
+                if (result == ButtonType.OK) {
+                    Database.getInstance().resetToSeed();
+                    service.reload();
+                    items.setAll(service.listItems());
+                }
+            });
+        });
+
+        Button showAll = new Button("Show All Items");
+        showAll.setVisible(false);
+        showAll.setOnAction(e -> {
+            lowStockActive[0] = false;
+            lowStockLabel.setStyle(lowStockNormal);
+            filtered.setPredicate(item -> true);
+            showAll.setVisible(false);
+        });
+        showAllBtn[0] = showAll;
+
+        HBox actions = new HBox(10, goAdd, edit, remove, clearSearch, exportCsv, goDelivery, resetBtn, showAll);
         actions.setPadding(new Insets(10, 0, 0, 0));
 
-        VBox root = new VBox(12, title, search, table, actions);
+        VBox root = new VBox(12, title, summaryBar, search, table, actions);
         root.setPadding(new Insets(18));
         return root;
     }
@@ -198,10 +331,20 @@ public class Scenes {
                 status.setText(error);
                 return;
             }
-            Item newItem = ItemFactory.createItem(name.getText().trim(), category.getValue(),
-                    qValue, location.getValue());
+            Item newItem = ItemFactory.createItem(
+                    name.getText().trim(),
+                    category.getValue(),
+                    qValue,
+                    location.getValue());
+
             service.addItem(newItem);
             items.add(newItem);
+
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setHeaderText("Item Added");
+            success.setContentText("The item was added successfully.");
+            success.showAndWait();
+
             stage.getScene().setRoot(createDashboard(stage));
         });
 
@@ -272,14 +415,23 @@ public class Scenes {
             }
 
             String error = ItemValidator.validate(
-                    name.getText(), category.getValue(), location.getValue(), qValue);
+                    name.getText(),
+                    category.getValue(),
+                    location.getValue(),
+                    qValue);
+
             if (error != null) {
                 status.setText(error);
                 return;
             }
 
-            Item updated = new Item(item.getId(), name.getText().trim(),
-                    category.getValue(), qValue, location.getValue());
+            Item updated = new Item(
+                    item.getId(),
+                    name.getText().trim(),
+                    category.getValue(),
+                    qValue,
+                    location.getValue());
+
             service.updateItem(updated);
             int idx = items.indexOf(item);
             if (idx >= 0) {
@@ -312,6 +464,163 @@ public class Scenes {
         HBox buttons = new HBox(10, save, back);
 
         VBox root = new VBox(12, title, form, status, buttons);
+        root.setPadding(new Insets(18));
+        return root;
+    }
+
+    public static Parent createDelivery(Stage stage) {
+        Label title = new Label("Receive Truck Delivery");
+        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+
+        Label instructions = new Label("Pick an item to restock, enter how many you need, and add it to the order.");
+        instructions.setStyle("-fx-font-size: 13px; -fx-text-fill: #555;");
+
+        ComboBox<Item> itemPicker = new ComboBox<>(items);
+        itemPicker.setPromptText("Choose an item to restock...");
+        itemPicker.setMaxWidth(Double.MAX_VALUE);
+        itemPicker.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(Item item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getName() + "  (" + item.getCategory() + ")");
+            }
+        });
+        itemPicker.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(Item item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getName() + "  (" + item.getCategory() + ")");
+            }
+        });
+
+        Label currentStockLabel = new Label("Current stock: —");
+        currentStockLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+
+        itemPicker.setOnAction(e -> {
+            Item sel = itemPicker.getValue();
+            if (sel != null) {
+                currentStockLabel.setText("Current stock: " + sel.getQuantity());
+            }
+        });
+
+        TextField deliveryQty = new TextField();
+        deliveryQty.setPromptText("How many?");
+        deliveryQty.setPrefWidth(100);
+
+        Label addStatus = new Label();
+        addStatus.setStyle("-fx-text-fill: red;");
+
+        ObservableList<String[]> manifest = FXCollections.observableArrayList();
+
+        TableView<String[]> manifestTable = new TableView<>(manifest);
+        manifestTable.setPlaceholder(new Label("No items added to this delivery yet."));
+        manifestTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        manifestTable.setPrefHeight(200);
+
+        TableColumn<String[], String> mColName = new TableColumn<>("Item");
+        mColName.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue()[1]));
+
+        TableColumn<String[], String> mColOld = new TableColumn<>("In Stock");
+        mColOld.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue()[2]));
+        mColOld.setMaxWidth(80);
+
+        TableColumn<String[], String> mColQty = new TableColumn<>("Restocking");
+        mColQty.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue()[3]));
+        mColQty.setMaxWidth(80);
+
+        TableColumn<String[], String> mColNew = new TableColumn<>("New Total");
+        mColNew.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue()[4]));
+        mColNew.setMaxWidth(80);
+
+        manifestTable.getColumns().addAll(mColName, mColOld, mColQty, mColNew);
+
+        Label manifestCount = new Label("Delivery Order: 0 items");
+        manifestCount.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+
+        Button addToManifest = new Button("Add to Order");
+        addToManifest.setOnAction(e -> {
+            Item sel = itemPicker.getValue();
+            if (sel == null) {
+                addStatus.setText("Pick an item first.");
+                return;
+            }
+            String qText = deliveryQty.getText().trim();
+            if (qText.isEmpty()) {
+                addStatus.setText("Enter how many you need.");
+                return;
+            }
+            int qty;
+            try {
+                qty = Integer.parseInt(qText);
+            } catch (NumberFormatException ex) {
+                addStatus.setText("Quantity must be a whole number.");
+                return;
+            }
+            if (qty <= 0) {
+                addStatus.setText("Quantity must be greater than 0.");
+                return;
+            }
+
+            manifest.add(new String[] {
+                    sel.getId(),
+                    sel.getName(),
+                    String.valueOf(sel.getQuantity()),
+                    String.valueOf(qty),
+                    String.valueOf(sel.getQuantity() + qty)
+            });
+
+            addStatus.setText("");
+            manifestCount.setText("Delivery Order: " + manifest.size() + " item(s)");
+            deliveryQty.clear();
+            itemPicker.setValue(null);
+            currentStockLabel.setText("Current stock: —");
+        });
+
+        HBox pickerRow = new HBox(10, itemPicker, deliveryQty, addToManifest);
+        pickerRow.setPadding(new Insets(4, 0, 4, 0));
+        HBox.setHgrow(itemPicker, Priority.ALWAYS);
+
+        Button processDelivery = new Button("Process Delivery");
+        processDelivery.setStyle("-fx-font-weight: bold;");
+        processDelivery.setOnAction(e -> {
+            if (manifest.isEmpty()) {
+                addStatus.setText("Add items to the manifest first.");
+                return;
+            }
+            int count = 0;
+            for (String[] row : manifest) {
+                String id = row[0];
+                int qty = Integer.parseInt(row[3]);
+                try {
+                    Item item = service.findItemById(id);
+                    service.updateQuantity(id, item.getQuantity() + qty);
+                    count++;
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+            items.setAll(service.listItems());
+
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setHeaderText("Delivery Processed");
+            ok.setContentText("Received stock for " + count + " item(s).");
+            ok.showAndWait();
+            stage.getScene().setRoot(createDashboard(stage));
+        });
+
+        Button clearManifest = new Button("Clear Order");
+        clearManifest.setOnAction(e -> {
+            manifest.clear();
+            manifestCount.setText("Delivery Order: 0 items");
+        });
+
+        Button back = new Button("Back to Dashboard");
+        back.setOnAction(e -> stage.getScene().setRoot(createDashboard(stage)));
+
+        HBox buttons = new HBox(10, processDelivery, clearManifest, back);
+        buttons.setPadding(new Insets(10, 0, 0, 0));
+
+        VBox root = new VBox(10, title, instructions, pickerRow, currentStockLabel, addStatus,
+                manifestCount, manifestTable, buttons);
         root.setPadding(new Insets(18));
         return root;
     }

@@ -22,8 +22,8 @@
 - [x] Write `doc/designpatterns.md` — document current and proposed design patterns
 
 ## Sprint 3 
-- [ ] Add a delivery feature that allows you to accept truck deliveries
-- [ ] Add a dataset of random grocery items 
-- [ ] 
-
+- [x] Add a delivery feature that allows you to accept truck deliveries
+- [x] Add a dataset of random grocery items 
+- [x] Add dashboard summary bar (Total Items, Low Stock, Total Quantity)
+- [x] Add Export to CSV functionality
 
