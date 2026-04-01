@@ -39,6 +39,7 @@ Here are screenshots of what we did:
 - Database integration worked successfully with SQLite
 
 ### What Could Be Improved
+-It needs more functionality
 
 ### Actionable Commitments
 - As a team, we will make it more intreractive and furnish the UI
@@ -49,7 +50,8 @@ Here are screenshots of what we did:
 
 Points | Story
 -------|--------
-5 | Add transaction history feature
-5 | Add Receive Delivery feature
-8 | Expand database with transaction tracking
-3 | Improve test coverage
+5 | Add a delivery feature that allows you to accept truck deliveries
+5 | Add Export to CSV functionality
+5 | Add a dataset of random grocery items
+3 | Add dashboard summary bar (Total Items, Low Stock, Total Quantity)
+
