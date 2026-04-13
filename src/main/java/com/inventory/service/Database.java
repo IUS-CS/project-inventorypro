@@ -1,6 +1,7 @@
 package com.inventory.service;
 
 import com.inventory.model.Item;
+import com.inventory.model.Transaction;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -188,6 +189,20 @@ public class Database {
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Database delete error: " + e.getMessage());
+        }
+    }
+
+    public void insertTransaction(Transaction t) {
+        String sql = "INSERT INTO transactions (id, item_id, type, amount, timestamp) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, t.getId());
+            ps.setString(2, t.getItemId());
+            ps.setString(3, t.getType());
+            ps.setInt(4, t.getAmount());
+            ps.setString(5, t.getTimestamp());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Transaction insert error: " + e.getMessage());
         }
     }
 }
