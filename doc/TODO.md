@@ -27,3 +27,6 @@
 - [x] Add dashboard summary bar (Total Items, Low Stock, Total Quantity)
 - [x] Add Export to CSV functionality
 
+## Sprint 4 
+- [x] Add transaction history feature to track inventory changes
+- [x] Add transactions table to SQLite database 
