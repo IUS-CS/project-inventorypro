@@ -42,8 +42,18 @@ public class Database {
                     location TEXT NOT NULL
                 )
                 """;
+        String transactionSql = """
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id TEXT PRIMARY KEY,
+                    item_id TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    amount INTEGER NOT NULL,
+                    timestamp TEXT NOT NULL
+                )
+                """;
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
+            stmt.execute(transactionSql);
         } catch (SQLException e) {
             System.err.println("Database init error: " + e.getMessage());
         }
