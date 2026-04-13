@@ -1,6 +1,9 @@
 package com.inventory.service;
 
 import com.inventory.model.Item;
+import com.inventory.model.Transaction;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -32,6 +35,15 @@ public class InventoryService {
         store.put(item.getId(), item);
         if (db != null)
             db.insert(item);
+        
+        db.insertTransaction(new Transaction(
+            UUID.randomUUID().toString(),
+            item.getId(),
+            "ADD",
+            item.getQuantity(),
+            LocalDateTime.now().toString()
+        ));
+}
     }
 
     public Item findItemById(String id) {
@@ -50,6 +62,20 @@ public class InventoryService {
         item.setQuantity(quantity);
         if (db != null)
             db.update(item);
+        int oldQty = item.getQuantity();
+        item.setQuantity(quantity);
+
+        if (db != null) {
+            db.update(item);
+
+        db.insertTransaction(new Transaction(
+            UUID.randomUUID().toString(),
+            item.getId(),
+            "UPDATE",
+            quantity - oldQty,
+            LocalDateTime.now().toString()
+        ));
+}
     }
 
     public void updateItem(Item item) {
@@ -68,7 +94,22 @@ public class InventoryService {
         store.remove(id);
         if (db != null)
             db.delete(id);
-    }
+        
+        Item item = store.get(id);
+        store.remove(id);
+
+        if (db != null) {
+            db.delete(id);
+
+        db.insertTransaction(new Transaction(
+            UUID.randomUUID().toString(),
+            id,
+            "DELETE",
+            item.getQuantity(),
+            LocalDateTime.now().toString()
+        ));
+        }
+}
 
     public List<Item> listItems() {
         return new ArrayList<>(store.values());
