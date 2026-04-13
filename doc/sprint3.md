@@ -13,7 +13,10 @@ Date: 2026-04-13
 
 This sprint, we completed:
 
-- 
+- Added a delivery feature that allows you to accept truck deliveries
+- Added a dataset of random grocery items 
+- Added dashboard summary bar (Total Items, Low Stock, Total Quantity)
+- Added Export to CSV functionality
 
 ---
 
