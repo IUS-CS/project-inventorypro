@@ -29,4 +29,6 @@
 
 ## Sprint 4 
 - [x] Add transaction history feature to track inventory changes
-- [x] Add transactions table to SQLite database 
+- [x] Add transactions table to SQLite database
+- [x] Write `doc/sprint3.md`
+- [x] Write `doc/testing.md` 
