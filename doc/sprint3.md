@@ -31,12 +31,13 @@ Here are screenshots of what we did:
 
 
 ### What Went Well
-- Good progress connecting frontend and backend
+- Good progress adding a delivery feature
 - UI features became more interactive and user-friendly
 - Database integration worked successfully with SQLite
+- Added functional dashboard summary bar
 
 ### What Could Be Improved
-- It needs more functionality
+- It needs more functionality and UI could be improved
 
 ### Actionable Commitments
 - As a team, we will make it more intreractive and furnish the UI
