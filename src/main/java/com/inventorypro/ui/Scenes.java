@@ -2,6 +2,7 @@ package com.inventorypro.ui;
 
 import com.inventory.model.Item;
 import com.inventory.model.ItemFactory;
+import com.inventory.model.Transaction;
 import com.inventory.service.Database;
 import com.inventory.service.InventoryService;
 import com.inventorypro.ui.validation.ItemValidator;
@@ -219,6 +220,16 @@ public class Scenes {
         Button clearSearch = new Button("Clear Search");
         clearSearch.setOnAction(e -> search.clear());
 
+        Button history = new Button("View History");
+        history.disableProperty().bind(table.getSelectionModel().selectedItemProperty().isNull());
+
+        history.setOnAction(e -> {
+            Item selected = table.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                stage.getScene().setRoot(createTransactionHistory(stage, selected));
+            }
+        });
+
         Button exportCsv = new Button("Export CSV");
         exportCsv.setOnAction(e -> {
             FileChooser chooser = new FileChooser();
@@ -278,7 +289,7 @@ public class Scenes {
         });
         showAllBtn[0] = showAll;
 
-        HBox actions = new HBox(10, goAdd, edit, remove, clearSearch, exportCsv, goDelivery, resetBtn, showAll);
+        HBox actions = new HBox(10, goAdd, edit, remove, clearSearch, exportCsv, goDelivery, resetBtn, showAll, history);
         actions.setPadding(new Insets(10, 0, 0, 0));
 
         VBox root = new VBox(12, title, summaryBar, search, table, actions);
@@ -633,6 +644,43 @@ public class Scenes {
 
         VBox root = new VBox(10, title, instructions, pickerRow, currentStockLabel, addStatus,
                 manifestCount, manifestTable, buttons);
+        root.setPadding(new Insets(18));
+        return root;
+    }
+
+    public static Parent createTransactionHistory(Stage stage, Item item) {
+        Label title = new Label("Transaction History");
+        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+
+        Label itemInfo = new Label("Item: " + item.getName() + " | ID: " + item.getId());
+
+        TableView<Transaction> table = new TableView<>();
+
+        TableColumn<Transaction, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
+        typeCol.setPrefWidth(120);
+
+        TableColumn<Transaction, Integer> amountCol = new TableColumn<>("Amount");
+        amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        amountCol.setPrefWidth(100);
+
+        TableColumn<Transaction, String> timeCol = new TableColumn<>("Timestamp");
+        timeCol.setCellValueFactory(new PropertyValueFactory<>("timestamp"));
+        timeCol.setPrefWidth(250);
+
+        table.getColumns().addAll(typeCol, amountCol, timeCol);
+
+        List<Transaction> historyList = service.getTransactionsForItem(item.getId());
+        table.setItems(FXCollections.observableArrayList(historyList));
+
+        if (historyList.isEmpty()) {
+            table.setPlaceholder(new Label("No transaction history found for this item."));
+        }
+
+        Button back = new Button("Back to Dashboard");
+        back.setOnAction(e -> stage.getScene().setRoot(createDashboard(stage)));
+
+        VBox root = new VBox(12, title, itemInfo, table, back);
         root.setPadding(new Insets(18));
         return root;
     }
