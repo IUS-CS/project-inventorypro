@@ -205,4 +205,29 @@ public class Database {
             System.err.println("Transaction insert error: " + e.getMessage());
         }
     }
+
+    public List<Transaction> loadTransactionsForItem(String itemId) {
+        List<Transaction> list = new ArrayList<>();
+        String sql = "SELECT id, item_id, type, amount, timestamp FROM transactions WHERE item_id = ? ORDER BY timestamp DESC";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setString(1, itemId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new Transaction(
+                        rs.getString("id"),
+                        rs.getString("item_id"),
+                        rs.getString("type"),
+                        rs.getInt("amount"),
+                        rs.getString("timestamp")
+            ));
+            }
+        }
+    } catch (SQLException e) {
+        System.err.println("Transaction load error: " + e.getMessage());
+    }
+
+    return list;
+}
 }
