@@ -125,4 +125,11 @@ public class InventoryService {
             db.loadAll().forEach(item -> store.put(item.getId(), item));
         }
     }
+
+    public List<Transaction> getTransactionsForItem(String itemId) {
+        if (db == null) {
+            return new ArrayList<>();
+        }
+        return db.loadTransactionsForItem(itemId);
+    }
 }
