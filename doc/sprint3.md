@@ -47,7 +47,5 @@ Here are screenshots of what we did:
 
 Points | Story
 -------|--------
-5 | Add a delivery feature that allows you to accept truck deliveries
-5 | Add Export to CSV functionality
-5 | Add a dataset of random grocery items
-3 | Add dashboard summary bar (Total Items, Low Stock, Total Quantity)
+5 | Add transaction history feature to track inventory changes
+5 | Add View History button to dashboard
