@@ -1,6 +1,6 @@
-# Sprint 3 Ceremony Minutes
+# Sprint 4 Ceremony Minutes
 
-Date: 2026-04-13
+Date: 2026-04-15
 
 ## Members Present
 - Dustin De Luna
