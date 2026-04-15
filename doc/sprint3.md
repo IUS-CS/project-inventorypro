@@ -50,3 +50,5 @@ Points | Story
 -------|--------
 5 | Add transaction history feature to track inventory changes
 5 | Add View History button to dashboard
+5 | Generate test cases
+
