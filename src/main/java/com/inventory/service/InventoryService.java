@@ -33,17 +33,15 @@ public class InventoryService {
             throw new IllegalArgumentException("An item with id '" + item.getId() + "' already exists.");
         }
         store.put(item.getId(), item);
-        if (db != null)
+        if (db != null) {
             db.insert(item);
-        
-        db.insertTransaction(new Transaction(
-            UUID.randomUUID().toString(),
-            item.getId(),
-            "ADD",
-            item.getQuantity(),
-            LocalDateTime.now().toString()
-        ));
-}
+            db.insertTransaction(new Transaction(
+                    UUID.randomUUID().toString(),
+                    item.getId(),
+                    "ADD",
+                    item.getQuantity(),
+                    LocalDateTime.now().toString()));
+        }
     }
 
     public Item findItemById(String id) {
@@ -59,23 +57,18 @@ public class InventoryService {
             throw new IllegalArgumentException("Quantity must not be negative.");
         }
         Item item = findItemById(id);
-        item.setQuantity(quantity);
-        if (db != null)
-            db.update(item);
         int oldQty = item.getQuantity();
         item.setQuantity(quantity);
 
         if (db != null) {
             db.update(item);
-
-        db.insertTransaction(new Transaction(
-            UUID.randomUUID().toString(),
-            item.getId(),
-            "UPDATE",
-            quantity - oldQty,
-            LocalDateTime.now().toString()
-        ));
-}
+            db.insertTransaction(new Transaction(
+                    UUID.randomUUID().toString(),
+                    item.getId(),
+                    "UPDATE",
+                    quantity - oldQty,
+                    LocalDateTime.now().toString()));
+        }
     }
 
     public void updateItem(Item item) {
@@ -91,25 +84,18 @@ public class InventoryService {
         if (!store.containsKey(id)) {
             throw new IllegalArgumentException("No item found with id '" + id + "'.");
         }
-        store.remove(id);
-        if (db != null)
-            db.delete(id);
-        
-        Item item = store.get(id);
-        store.remove(id);
+        Item item = store.remove(id);
 
         if (db != null) {
             db.delete(id);
-
-        db.insertTransaction(new Transaction(
-            UUID.randomUUID().toString(),
-            id,
-            "DELETE",
-            item.getQuantity(),
-            LocalDateTime.now().toString()
-        ));
+            db.insertTransaction(new Transaction(
+                    UUID.randomUUID().toString(),
+                    id,
+                    "DELETE",
+                    item.getQuantity(),
+                    LocalDateTime.now().toString()));
         }
-}
+    }
 
     public List<Item> listItems() {
         return new ArrayList<>(store.values());

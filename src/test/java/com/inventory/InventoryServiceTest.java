@@ -119,4 +119,36 @@ public class InventoryServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new Item("E-001", "Bad Item", "General", -10, "Nowhere"));
     }
+
+    @Test
+    void updateItem_shouldPersistNewValues() {
+        service.addItem(new Item("F-001", "Original", "General", 5, "Shelf 1"));
+        Item updated = new Item("F-001", "Updated", "Electronics", 99, "Shelf 2");
+        service.updateItem(updated);
+        Item found = service.findItemById("F-001");
+        assertEquals("Updated", found.getName());
+        assertEquals("Electronics", found.getCategory());
+        assertEquals(99, found.getQuantity());
+        assertEquals("Shelf 2", found.getLocation());
+    }
+
+    @Test
+    void updateItem_unknownId_shouldThrow() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.updateItem(new Item("NO-SUCH", "X", "X", 1, "X")));
+    }
+
+    @Test
+    void reload_withNullDb_clearsStore() {
+        service.addItem(new Item("G-001", "Widget", "General", 3, "Shelf 1"));
+        service.addItem(new Item("G-002", "Gadget", "General", 1, "Shelf 2"));
+        assertEquals(2, service.size());
+        service.reload();
+        assertEquals(0, service.size());
+    }
+
+    @Test
+    void getTransactionsForItem_withNullDb_returnsEmptyList() {
+        assertTrue(service.getTransactionsForItem("any-id").isEmpty());
+    }
 }

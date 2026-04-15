@@ -33,3 +33,4 @@
 - [x] Write `doc/sprint3.md`
 - [x] Write `doc/testing.md` 
 - [x] Add View History button to dashboard
+- [x] Generate test cases
