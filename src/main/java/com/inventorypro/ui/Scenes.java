@@ -21,6 +21,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.List;
 
 public class Scenes {
 
@@ -289,7 +290,8 @@ public class Scenes {
         });
         showAllBtn[0] = showAll;
 
-        HBox actions = new HBox(10, goAdd, edit, remove, clearSearch, exportCsv, goDelivery, resetBtn, showAll, history);
+        HBox actions = new HBox(10, goAdd, edit, remove, clearSearch, exportCsv, goDelivery, resetBtn, showAll,
+                history);
         actions.setPadding(new Insets(10, 0, 0, 0));
 
         VBox root = new VBox(12, title, summaryBar, search, table, actions);
@@ -648,6 +650,7 @@ public class Scenes {
         return root;
     }
 
+    @SuppressWarnings("unchecked")
     public static Parent createTransactionHistory(Stage stage, Item item) {
         Label title = new Label("Transaction History");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
