@@ -23,6 +23,7 @@ This sprint, we completed:
 ## Screenshots
 
 Here are screenshots of what we did:
+<img width="1451" height="933" alt="image" src="https://github.com/user-attachments/assets/2863cc76-a10a-4966-bd3c-8283cd59ce9a" />
 
 
 ---
