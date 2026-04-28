@@ -8,6 +8,8 @@ public class Item {
     private int quantity;
     private final String location;
 
+    private int lowStockThreshold = 5;
+    
     public Item(String id, String name, String category, int quantity, String location) {
         if (quantity < 0) {
             throw new IllegalArgumentException("Quantity must not be negative.");
@@ -25,11 +27,26 @@ public class Item {
     public int    getQuantity() { return quantity; }
     public String getLocation() { return location; }
 
+    public int getLowStockThreshold() {
+        return lowStockThreshold;
+    }
+
+    public void setLowStockThreshold(int threshold) {
+        if (threshold < 0) {
+            throw new IllegalArgumentException("Threshold must not be negative.");
+        }
+        this.lowStockThreshold = threshold;
+    }
+
     public void setQuantity(int quantity) {
         if (quantity < 0) {
             throw new IllegalArgumentException("Quantity must not be negative.");
         }
         this.quantity = quantity;
+    }
+
+    public boolean isLowStock() {
+        return quantity <= lowStockThreshold;
     }
 
     @Override
