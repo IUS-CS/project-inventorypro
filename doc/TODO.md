@@ -34,3 +34,9 @@
 - [x] Write `doc/testing.md` 
 - [x] Add View History button to dashboard
 - [x] Generate test cases
+
+## Sprint 5 (Completed)
+- [x] Add low stock alert system
+- [x] Enhance transaction history with filtering and sorting
+- [x] Write `doc/sprint4.md` 
+- [x] Generate test cases
