@@ -49,4 +49,8 @@ Here are screenshots of what we did:
 
 ## Next Sprint Planning
 
-
+Points | Story
+-------|--------
+5 | Add low stock alert system
+5 | Enhance transaction history with filtering and sorting
+5 | Write `doc/sprint4.md`
