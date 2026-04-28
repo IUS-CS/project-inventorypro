@@ -46,7 +46,7 @@ public class Scenes {
 
         Runnable updateSummary = () -> {
             int total = items.size();
-            long lowStock = items.stream().filter(i -> i.getQuantity() < 5).count();
+            long lowStock = items.stream().filter(Item::isLowStock).count();
             int totalQty = items.stream().mapToInt(Item::getQuantity).sum();
             totalItemsLabel.setText("Total Items: " + total);
             lowStockLabel.setText("Low Stock: " + lowStock);
@@ -75,7 +75,7 @@ public class Scenes {
             if (lowStockActive[0]) {
                 lowStockLabel.setStyle(lowStockHighlight);
                 search.clear();
-                filtered.setPredicate(item -> item.getQuantity() < 5);
+                filtered.setPredicate(Item::isLowStock);
                 showAllBtn[0].setVisible(true);
             } else {
                 lowStockLabel.setStyle(lowStockNormal);
@@ -121,12 +121,12 @@ public class Scenes {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
                         setStyle("");
-                    } else if (item.getQuantity() < 5) {
-                        setStyle("-fx-background-color: lightcoral;");
-                    } else if (item.getQuantity() < 10) {
-                        setStyle("-fx-background-color: lightyellow;");
+                    } else if (item.isLowStock()) {
+                        setStyle("-fx-background-color: #ffcccc;");
+                    } else if (item.getQuantity() <= 10) {
+                        setStyle("-fx-background-color: #fff7cc;");
                     } else {
-                        setStyle("-fx-background-color: lightgreen;");
+                        setStyle("");
                     }
                 }
             };
@@ -657,6 +657,15 @@ public class Scenes {
 
         Label itemInfo = new Label("Item: " + item.getName() + " | ID: " + item.getId());
 
+        List<Transaction> historyList = service.getTransactionsForItem(item.getId());
+
+        Label summary = new Label("Total Transactions: " + historyList.size());
+        summary.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+
+        ComboBox<String> filterBox = new ComboBox<>();
+        filterBox.getItems().addAll("ALL", "ADD", "UPDATE", "DELETE", "DELIVERY");
+        filterBox.setValue("ALL");
+        
         TableView<Transaction> table = new TableView<>();
 
         TableColumn<Transaction, String> typeCol = new TableColumn<>("Type");
@@ -673,8 +682,20 @@ public class Scenes {
 
         table.getColumns().addAll(typeCol, amountCol, timeCol);
 
-        List<Transaction> historyList = service.getTransactionsForItem(item.getId());
-        table.setItems(FXCollections.observableArrayList(historyList));
+        ObservableList<Transaction> transactionItems = FXCollections.observableArrayList(historyList);
+        FilteredList<Transaction> filteredTransactions = new FilteredList<>(transactionItems, p -> true);
+
+        filterBox.setOnAction(e -> {
+        String selectedType = filterBox.getValue();
+
+        if ("ALL".equals(selectedType)) {
+            filteredTransactions.setPredicate(t -> true);
+        } else {
+            filteredTransactions.setPredicate(t -> selectedType.equals(t.getType()));
+        }
+        });
+        
+        table.setItems(filteredTransactions);
 
         if (historyList.isEmpty()) {
             table.setPlaceholder(new Label("No transaction history found for this item."));
@@ -683,7 +704,7 @@ public class Scenes {
         Button back = new Button("Back to Dashboard");
         back.setOnAction(e -> stage.getScene().setRoot(createDashboard(stage)));
 
-        VBox root = new VBox(12, title, itemInfo, table, back);
+        VBox root = new VBox(12, title, itemInfo, summary, filterBox, table, back);
         root.setPadding(new Insets(18));
         return root;
     }
