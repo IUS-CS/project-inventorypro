@@ -14,10 +14,10 @@ Date: 2026-04-15
 This sprint, we completed:
 
 - Added transaction history feature to track inventory changes
-- Adedd transactions table to SQLite database
+- Added transactions table to SQLite database
 - Wrote `doc/sprint3.md`
 - Wrote `doc/testing.md` 
-- Adedd View History button to dashboard
+- Added View History button to dashboard
 - Generated test cases for the items, Transactions and the inventory service
 - Fixed bugs
 
