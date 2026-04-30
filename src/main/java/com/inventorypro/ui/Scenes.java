@@ -36,26 +36,37 @@ public class Scenes {
         Label totalItemsLabel = new Label();
         Label lowStockLabel = new Label();
         Label totalQtyLabel = new Label();
+        Label totalValueLabel = new Label();
+        Label expiringSoonLabel = new Label();
         String statStyle = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 16; "
                 + "-fx-background-color: #d9edf7; -fx-background-radius: 8; -fx-text-fill: #31708f;";
         String lowStockStyle = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 16; "
                 + "-fx-background-color: #fcf8e3; -fx-background-radius: 8; -fx-text-fill: #8a6d3b;";
+        String expirySoonStyle = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 16; "
+                + "-fx-background-color: #fde8d8; -fx-background-radius: 8; -fx-text-fill: #c0392b; -fx-cursor: hand;";
         totalItemsLabel.setStyle(statStyle);
         totalQtyLabel.setStyle(statStyle);
+        totalValueLabel.setStyle(statStyle);
         lowStockLabel.setStyle(lowStockStyle + "-fx-cursor: hand;");
+        expiringSoonLabel.setStyle(expirySoonStyle);
 
         Runnable updateSummary = () -> {
             int total = items.size();
             long lowStock = items.stream().filter(Item::isLowStock).count();
             int totalQty = items.stream().mapToInt(Item::getQuantity).sum();
+            double totalValue = items.stream().mapToDouble(i -> i.getPrice() * i.getQuantity()).sum();
+            long expiringSoon = items.stream().filter(Item::isExpiringSoon).count();
             totalItemsLabel.setText("Total Items: " + total);
             lowStockLabel.setText("Low Stock: " + lowStock);
             totalQtyLabel.setText("Total Quantity: " + totalQty);
+            totalValueLabel.setText(String.format("Total Value: $%.2f", totalValue));
+            expiringSoonLabel.setText("Expiring Soon: " + expiringSoon);
         };
         updateSummary.run();
         items.addListener((ListChangeListener<Item>) c -> updateSummary.run());
 
-        HBox summaryBar = new HBox(12, totalItemsLabel, lowStockLabel, totalQtyLabel);
+        HBox summaryBar = new HBox(12, totalItemsLabel, lowStockLabel, totalQtyLabel, totalValueLabel,
+                expiringSoonLabel);
         summaryBar.setPadding(new Insets(4, 0, 8, 0));
         summaryBar.setStyle("-fx-border-color: #ddd; -fx-border-width: 0 0 1 0; -fx-padding: 6 0 10 0;");
 
@@ -65,13 +76,18 @@ public class Scenes {
         FilteredList<Item> filtered = new FilteredList<>(items, p -> true);
 
         final boolean[] lowStockActive = { false };
+        final boolean[] expiringSoonActive = { false };
         final Button[] showAllBtn = { null };
         String lowStockNormal = lowStockStyle + "-fx-cursor: hand;";
         String lowStockHighlight = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 16; "
                 + "-fx-background-color: #f2dede; -fx-background-radius: 8; -fx-text-fill: #a94442; -fx-cursor: hand;";
+        String expirySoonHighlight = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 16; "
+                + "-fx-background-color: #e74c3c; -fx-background-radius: 8; -fx-text-fill: white; -fx-cursor: hand;";
 
         lowStockLabel.setOnMouseClicked(ev -> {
             lowStockActive[0] = !lowStockActive[0];
+            expiringSoonActive[0] = false;
+            expiringSoonLabel.setStyle(expirySoonStyle);
             if (lowStockActive[0]) {
                 lowStockLabel.setStyle(lowStockHighlight);
                 search.clear();
@@ -84,11 +100,29 @@ public class Scenes {
             }
         });
 
+        expiringSoonLabel.setOnMouseClicked(ev -> {
+            expiringSoonActive[0] = !expiringSoonActive[0];
+            lowStockActive[0] = false;
+            lowStockLabel.setStyle(lowStockNormal);
+            if (expiringSoonActive[0]) {
+                expiringSoonLabel.setStyle(expirySoonHighlight);
+                search.clear();
+                filtered.setPredicate(Item::isExpiringSoon);
+                showAllBtn[0].setVisible(true);
+            } else {
+                expiringSoonLabel.setStyle(expirySoonStyle);
+                filtered.setPredicate(item -> true);
+                showAllBtn[0].setVisible(false);
+            }
+        });
+
         search.textProperty().addListener((obs, oldVal, newVal) -> {
             String lower = (newVal == null) ? "" : newVal.trim().toLowerCase();
 
             lowStockActive[0] = false;
+            expiringSoonActive[0] = false;
             lowStockLabel.setStyle(lowStockNormal);
+            expiringSoonLabel.setStyle(expirySoonStyle);
             showAllBtn[0].setVisible(false);
 
             if (lower.isEmpty()) {
@@ -123,6 +157,8 @@ public class Scenes {
                         setStyle("");
                     } else if (item.isLowStock()) {
                         setStyle("-fx-background-color: #ffcccc;");
+                    } else if (item.isExpiringSoon()) {
+                        setStyle("-fx-background-color: #ffe0b2;");
                     } else if (item.getQuantity() <= 10) {
                         setStyle("-fx-background-color: #fff7cc;");
                     } else {
@@ -156,6 +192,23 @@ public class Scenes {
         colQty.setMaxWidth(90);
         colQty.setMinWidth(70);
 
+        TableColumn<Item, String> colPrice = new TableColumn<>("Price");
+        colPrice.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(
+                cd.getValue().getPrice() > 0 ? String.format("$%.2f", cd.getValue().getPrice()) : "—"));
+        colPrice.setSortable(true);
+        colPrice.setMaxWidth(80);
+        colPrice.setMinWidth(60);
+
+        TableColumn<Item, String> colExpiry = new TableColumn<>("Expiry");
+        colExpiry.setCellValueFactory(cd -> {
+            String exp = cd.getValue().getExpiresAt();
+            return new javafx.beans.property.SimpleStringProperty(
+                    (exp == null || exp.isEmpty()) ? "N/A" : exp);
+        });
+        colExpiry.setSortable(true);
+        colExpiry.setMaxWidth(110);
+        colExpiry.setMinWidth(90);
+
         TableColumn<Item, Void> colAdj = new TableColumn<>("");
         colAdj.setSortable(false);
         colAdj.setMinWidth(80);
@@ -187,7 +240,7 @@ public class Scenes {
             }
         });
 
-        table.getColumns().addAll(colName, colCategory, colLocation, colQty, colAdj);
+        table.getColumns().addAll(colName, colCategory, colLocation, colQty, colPrice, colExpiry, colAdj);
 
         Button goAdd = new Button("Add Item");
         goAdd.setOnAction(e -> stage.getScene().setRoot(createAddItem(stage)));
@@ -284,7 +337,9 @@ public class Scenes {
         showAll.setVisible(false);
         showAll.setOnAction(e -> {
             lowStockActive[0] = false;
+            expiringSoonActive[0] = false;
             lowStockLabel.setStyle(lowStockNormal);
+            expiringSoonLabel.setStyle(expirySoonStyle);
             filtered.setPredicate(item -> true);
             showAll.setVisible(false);
         });
@@ -325,6 +380,16 @@ public class Scenes {
         TextField quantity = new TextField();
         quantity.setPromptText("Quantity");
 
+        TextField price = new TextField();
+        price.setPromptText("e.g. 2.99 (optional)");
+
+        javafx.scene.control.DatePicker expiry = new javafx.scene.control.DatePicker();
+        expiry.setPromptText("Expiry date (optional)");
+        expiry.setMaxWidth(Double.MAX_VALUE);
+
+        TextField supplier = new TextField();
+        supplier.setPromptText("Supplier name (optional)");
+
         Label status = new Label();
         status.setStyle("-fx-text-fill: red;");
 
@@ -339,17 +404,39 @@ public class Scenes {
                 return;
             }
 
+            double pValue = 0.0;
+            String pText = price.getText().trim();
+            if (!pText.isEmpty()) {
+                try {
+                    pValue = Double.parseDouble(pText);
+                    if (pValue < 0) {
+                        status.setText("Price must not be negative.");
+                        return;
+                    }
+                } catch (NumberFormatException ex) {
+                    status.setText("Price must be a valid number (e.g. 2.99).");
+                    return;
+                }
+            }
+
             String error = ItemValidator.validate(
                     name.getText(), category.getValue(), location.getValue(), qValue);
             if (error != null) {
                 status.setText(error);
                 return;
             }
+
+            String expiryVal = expiry.getValue() != null ? expiry.getValue().toString() : "";
+            String supplierVal = supplier.getText().trim();
+
             Item newItem = ItemFactory.createItem(
                     name.getText().trim(),
                     category.getValue(),
                     qValue,
-                    location.getValue());
+                    location.getValue(),
+                    pValue,
+                    expiryVal,
+                    supplierVal);
 
             service.addItem(newItem);
             items.add(newItem);
@@ -376,6 +463,12 @@ public class Scenes {
         form.add(location, 1, 2);
         form.add(new Label("Quantity:"), 0, 3);
         form.add(quantity, 1, 3);
+        form.add(new Label("Price ($):"), 0, 4);
+        form.add(price, 1, 4);
+        form.add(new Label("Expiry:"), 0, 5);
+        form.add(expiry, 1, 5);
+        form.add(new Label("Supplier:"), 0, 6);
+        form.add(supplier, 1, 6);
 
         ColumnConstraints c1 = new ColumnConstraints();
         c1.setMinWidth(90);
@@ -414,6 +507,21 @@ public class Scenes {
 
         TextField quantity = new TextField(String.valueOf(item.getQuantity()));
 
+        TextField price = new TextField(item.getPrice() > 0 ? String.format("%.2f", item.getPrice()) : "");
+        price.setPromptText("e.g. 2.99 (optional)");
+
+        javafx.scene.control.DatePicker expiry = new javafx.scene.control.DatePicker();
+        if (item.getExpiresAt() != null && !item.getExpiresAt().isEmpty()) {
+            try {
+                expiry.setValue(java.time.LocalDate.parse(item.getExpiresAt()));
+            } catch (Exception ignored) {
+            }
+        }
+        expiry.setMaxWidth(Double.MAX_VALUE);
+
+        TextField supplier = new TextField(item.getSupplier() != null ? item.getSupplier() : "");
+        supplier.setPromptText("Supplier name (optional)");
+
         Label status = new Label();
         status.setStyle("-fx-text-fill: red;");
 
@@ -430,6 +538,22 @@ public class Scenes {
                 return;
             }
 
+            double pValue = 0.0;
+            String pText = price.getText().trim();
+            if (!pText.isEmpty()) {
+                try {
+                    pValue = Double.parseDouble(pText);
+                    if (pValue < 0) {
+                        status.setText("Price must not be negative.");
+                        return;
+                    }
+                } catch (NumberFormatException ex) {
+                    status.setStyle("-fx-text-fill: red;");
+                    status.setText("Price must be a valid number (e.g. 2.99).");
+                    return;
+                }
+            }
+
             String error = ItemValidator.validate(
                     name.getText(),
                     category.getValue(),
@@ -442,12 +566,18 @@ public class Scenes {
                 return;
             }
 
+            String expiryVal = expiry.getValue() != null ? expiry.getValue().toString() : "";
+            String supplierVal = supplier.getText().trim();
+
             Item updated = new Item(
                     item.getId(),
                     name.getText().trim(),
                     category.getValue(),
                     qValue,
-                    location.getValue());
+                    location.getValue(),
+                    pValue,
+                    expiryVal,
+                    supplierVal);
 
             service.updateItem(updated);
 
@@ -478,6 +608,12 @@ public class Scenes {
         form.add(location, 1, 2);
         form.add(new Label("Quantity:"), 0, 3);
         form.add(quantity, 1, 3);
+        form.add(new Label("Price ($):"), 0, 4);
+        form.add(price, 1, 4);
+        form.add(new Label("Expiry:"), 0, 5);
+        form.add(expiry, 1, 5);
+        form.add(new Label("Supplier:"), 0, 6);
+        form.add(supplier, 1, 6);
 
         ColumnConstraints c1 = new ColumnConstraints();
         c1.setMinWidth(90);
@@ -638,10 +774,47 @@ public class Scenes {
             manifestCount.setText("Delivery Order: 0 items");
         });
 
+        Button addExpiringSoon = new Button("Add Expiring Soon Items");
+        addExpiringSoon.setStyle("-fx-background-color: #ff9800; -fx-text-fill: white; -fx-font-weight: bold;");
+        addExpiringSoon.setOnAction(e -> {
+            List<Item> expiring = items.stream()
+                    .filter(Item::isExpiringSoon)
+                    .collect(java.util.stream.Collectors.toList());
+            if (expiring.isEmpty()) {
+                addStatus.setStyle("-fx-text-fill: #555;");
+                addStatus.setText("No items are expiring soon.");
+                return;
+            }
+            java.util.Set<String> alreadyAdded = new java.util.HashSet<>();
+            for (String[] row : manifest)
+                alreadyAdded.add(row[0]);
+            int added = 0;
+            for (Item exp : expiring) {
+                if (!alreadyAdded.contains(exp.getId())) {
+                    manifest.add(new String[] {
+                            exp.getId(),
+                            exp.getName(),
+                            String.valueOf(exp.getQuantity()),
+                            "10",
+                            String.valueOf(exp.getQuantity() + 10)
+                    });
+                    added++;
+                }
+            }
+            manifestCount.setText("Delivery Order: " + manifest.size() + " item(s)");
+            if (added > 0) {
+                addStatus.setStyle("-fx-text-fill: green;");
+                addStatus.setText(added + " expiring item(s) added to order.");
+            } else {
+                addStatus.setStyle("-fx-text-fill: #555;");
+                addStatus.setText("All expiring items are already in the order.");
+            }
+        });
+
         Button back = new Button("Back to Dashboard");
         back.setOnAction(e -> stage.getScene().setRoot(createDashboard(stage)));
 
-        HBox buttons = new HBox(10, processDelivery, clearManifest, back);
+        HBox buttons = new HBox(10, processDelivery, clearManifest, addExpiringSoon, back);
         buttons.setPadding(new Insets(10, 0, 0, 0));
 
         VBox root = new VBox(10, title, instructions, pickerRow, currentStockLabel, addStatus,
@@ -665,7 +838,7 @@ public class Scenes {
         ComboBox<String> filterBox = new ComboBox<>();
         filterBox.getItems().addAll("ALL", "ADD", "UPDATE", "DELETE", "DELIVERY");
         filterBox.setValue("ALL");
-        
+
         TableView<Transaction> table = new TableView<>();
 
         TableColumn<Transaction, String> typeCol = new TableColumn<>("Type");
@@ -686,15 +859,15 @@ public class Scenes {
         FilteredList<Transaction> filteredTransactions = new FilteredList<>(transactionItems, p -> true);
 
         filterBox.setOnAction(e -> {
-        String selectedType = filterBox.getValue();
+            String selectedType = filterBox.getValue();
 
-        if ("ALL".equals(selectedType)) {
-            filteredTransactions.setPredicate(t -> true);
-        } else {
-            filteredTransactions.setPredicate(t -> selectedType.equals(t.getType()));
-        }
+            if ("ALL".equals(selectedType)) {
+                filteredTransactions.setPredicate(t -> true);
+            } else {
+                filteredTransactions.setPredicate(t -> selectedType.equals(t.getType()));
+            }
         });
-        
+
         table.setItems(filteredTransactions);
 
         if (historyList.isEmpty()) {
