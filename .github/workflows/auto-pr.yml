@@ -1,0 +1,30 @@
+name: Auto-create PR on push to dev
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Pull Request if not exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh pr list --base main --head dev --json number --jq '.[0].number')
+          if [ -z "$EXISTING" ]; then
+            gh pr create \
+              --base main \
+              --head dev \
+              --title "Sprint 5: Price, Expiry, and Supplier Tracking" \
+              --body "## Changes\n- Added price field with total inventory value on dashboard\n- Added expiration date tracking with expiring-soon alerts\n- Added supplier tracking\n- Added 'Add Expiring Soon Items' button in Receive Delivery\n- Updated seed data with real-world supplier names"
+          else
+            echo "PR #$EXISTING already exists, skipping."
+          fi
