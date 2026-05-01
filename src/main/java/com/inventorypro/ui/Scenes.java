@@ -241,6 +241,7 @@ public class Scenes {
         });
 
         table.getColumns().addAll(colName, colCategory, colLocation, colQty, colPrice, colExpiry, colAdj);
+        VBox.setVgrow(table, Priority.ALWAYS);
 
         Button goAdd = new Button("Add Item");
         goAdd.setOnAction(e -> stage.getScene().setRoot(createAddItem(stage)));
@@ -441,12 +442,7 @@ public class Scenes {
             service.addItem(newItem);
             items.add(newItem);
 
-            Alert success = new Alert(Alert.AlertType.INFORMATION);
-            success.setHeaderText("Item Added");
-            success.setContentText("The item was added successfully.");
-            success.showAndWait();
-
-            stage.getScene().setRoot(createDashboard(stage));
+            javafx.application.Platform.runLater(() -> stage.getScene().setRoot(createDashboard(stage)));
         });
 
         Button back = new Button("Back to Dashboard");
@@ -586,12 +582,7 @@ public class Scenes {
                 items.set(idx, updated);
             }
 
-            Alert success = new Alert(Alert.AlertType.INFORMATION);
-            success.setHeaderText("Item Updated");
-            success.setContentText("The item was updated successfully.");
-            success.showAndWait();
-
-            stage.getScene().setRoot(createDashboard(stage));
+            javafx.application.Platform.runLater(() -> stage.getScene().setRoot(createDashboard(stage)));
         });
 
         Button back = new Button("Cancel");
@@ -761,11 +752,7 @@ public class Scenes {
             }
             items.setAll(service.listItems());
 
-            Alert ok = new Alert(Alert.AlertType.INFORMATION);
-            ok.setHeaderText("Delivery Processed");
-            ok.setContentText("Received stock for " + count + " item(s).");
-            ok.showAndWait();
-            stage.getScene().setRoot(createDashboard(stage));
+            javafx.application.Platform.runLater(() -> stage.getScene().setRoot(createDashboard(stage)));
         });
 
         Button clearManifest = new Button("Clear Order");
@@ -817,6 +804,7 @@ public class Scenes {
         HBox buttons = new HBox(10, processDelivery, clearManifest, addExpiringSoon, back);
         buttons.setPadding(new Insets(10, 0, 0, 0));
 
+        VBox.setVgrow(manifestTable, Priority.ALWAYS);
         VBox root = new VBox(10, title, instructions, pickerRow, currentStockLabel, addStatus,
                 manifestCount, manifestTable, buttons);
         root.setPadding(new Insets(18));
@@ -869,6 +857,7 @@ public class Scenes {
         });
 
         table.setItems(filteredTransactions);
+        VBox.setVgrow(table, Priority.ALWAYS);
 
         if (historyList.isEmpty()) {
             table.setPlaceholder(new Label("No transaction history found for this item."));
