@@ -12,19 +12,27 @@ jobs:
       pull-requests: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
-
       - name: Create Pull Request if not exists
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          EXISTING=$(gh pr list --base main --head dev --json number --jq '.[0].number')
-          if [ -z "$EXISTING" ]; then
-            gh pr create \
-              --base main \
-              --head dev \
-              --title "Sprint 5: Price, Expiry, and Supplier Tracking" \
-              --body "## Changes\n- Added price field with total inventory value on dashboard\n- Added expiration date tracking with expiring-soon alerts\n- Added supplier tracking\n- Added 'Add Expiring Soon Items' button in Receive Delivery\n- Updated seed data with real-world supplier names"
-          else
-            echo "PR #$EXISTING already exists, skipping."
-          fi
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: 'main',
+              head: 'dev',
+              state: 'open'
+            });
+            if (pulls.length === 0) {
+              await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Sprint 5: Price, Expiry, and Supplier Tracking',
+                head: 'dev',
+                base: 'main',
+                body: '## Changes\n- Added price field with total inventory value on dashboard\n- Added expiration date tracking with expiring-soon alerts\n- Added supplier tracking\n- Added \'Add Expiring Soon Items\' button in Receive Delivery\n- Updated seed data with real-world supplier names'
+              });
+              console.log('Pull request created successfully.');
+            } else {
+              console.log(`PR #${pulls[0].number} already exists, skipping.`);
+            }
